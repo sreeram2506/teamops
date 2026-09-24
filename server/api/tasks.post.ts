@@ -1,20 +1,26 @@
-import { tasks } from '../data/tasks';
+import { pool } from '../database/db';
 
 export default defineEventHandler(async (event) => {
 
   const body = await readBody(event)
 
-  const task = {
-    id: tasks.length + 1,
-    title: body.title,
-    description: body.description,
-    status: body.status || 'Todo',
-    priority: body.priority || 'Medium',
-    assignee: body.assignee,
-    projectId: body.projectId
-  }
+  const result = await pool.query(
+    `
+    INSERT INTO tasks
+      (title, description, status, priority, assignee, project_id)
+    VALUES
+      ($1, $2, $3, $4, $5, $6)
+    RETURNING *
+    `,
+    [
+      body.title,
+      body.description,
+      body.status || 'Todo',
+      body.priority || 'Medium',
+      body.assignee,
+      body.projectId
+    ]
+  )
 
-  tasks.push(task)
-
-  return task
+  return result.rows[0]
 })

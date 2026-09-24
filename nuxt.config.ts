@@ -13,6 +13,10 @@ export default defineNuxtConfig({
   css: [
     '~/assets/css/main.css'
   ],
+
+  runtimeConfig: {
+    databaseUrl: process.env.DATABASE_URL
+  },
   
 
   app: {

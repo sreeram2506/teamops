@@ -5,15 +5,80 @@ definePageMeta({
   middleware: 'auth'
 })
 
-const route = useRoute()
+type Task = {
+  id: number
+  title: string
+  status: string
+  assignee: string
+  projectId: number
+}
 
+const route = useRoute()
 const projectId = route.params.id
 
 const {
   data: project,
   pending,
-  error
+  error,
+  refresh
 } = await useFetch(`/api/projects/${projectId}`)
+
+const { data: tasks } = await useFetch<Task[]>('/api/tasks')
+const { data: members } = await useFetch<{ name: string }[]>('/api/members')
+
+const projectTasks = computed(() => {
+  return (tasks.value ?? []).filter(task => String(task.projectId) === String(projectId))
+})
+
+const form = reactive({
+  name: '',
+  description: '',
+  status: 'Active',
+  progress: 0,
+  owner: 'John Doe'
+})
+
+watch(project, (value) => {
+  if (!value) {
+    return
+  }
+
+  form.name = value.name
+  form.description = value.description
+  form.status = value.status
+  form.progress = value.progress
+  form.owner = value.owner
+}, { immediate: true })
+
+const saving = ref(false)
+const deleting = ref(false)
+
+const saveProject = async () => {
+  saving.value = true
+
+  try {
+    await $fetch(`/api/projects/${projectId}`, {
+      method: 'PATCH',
+      body: form
+    })
+    await refresh()
+  } finally {
+    saving.value = false
+  }
+}
+
+const deleteProject = async () => {
+  deleting.value = true
+
+  try {
+    await $fetch(`/api/projects/${projectId}`, {
+      method: 'DELETE'
+    })
+    await navigateTo('/projects')
+  } finally {
+    deleting.value = false
+  }
+}
 
 </script>
 
@@ -60,22 +125,75 @@ const {
 
         <div class="panel">
 
-          <h3>Project Information</h3>
+          <h3>Edit project</h3>
 
-          <div class="detail-row">
-            <span>Owner</span>
-            <strong>{{ project.owner }}</strong>
-          </div>
+          <form
+            class="task-form"
+            style="margin-top: 20px"
+            @submit.prevent="saveProject"
+          >
 
-          <div class="detail-row">
-            <span>Status</span>
-            <strong>{{ project.status }}</strong>
-          </div>
+            <div class="form-field">
+              <label>Name</label>
+              <input v-model="form.name" required>
+            </div>
 
-          <div class="detail-row">
-            <span>Progress</span>
-            <strong>{{ project.progress }}%</strong>
-          </div>
+            <div class="form-field">
+              <label>Description</label>
+              <textarea v-model="form.description" />
+            </div>
+
+            <div class="form-field">
+              <label>Status</label>
+              <select v-model="form.status">
+                <option value="Active">Active</option>
+                <option value="Completed">Completed</option>
+              </select>
+            </div>
+
+            <div class="form-field">
+              <label>Progress</label>
+              <input
+                v-model.number="form.progress"
+                type="number"
+                min="0"
+                max="100"
+              >
+            </div>
+
+            <div class="form-field">
+              <label>Owner</label>
+              <select v-model="form.owner">
+                <option
+                  v-for="member in members"
+                  :key="member.name"
+                  :value="member.name"
+                >
+                  {{ member.name }}
+                </option>
+              </select>
+            </div>
+
+            <div class="task-actions">
+              <button
+                type="submit"
+                class="primary-button"
+                :disabled="saving"
+              >
+                {{ saving ? 'Saving...' : 'Save changes' }}
+              </button>
+
+              <button
+                type="button"
+                class="danger-button"
+                :disabled="deleting"
+                @click="deleteProject"
+              >
+                {{ deleting ? 'Deleting...' : 'Delete project' }}
+              </button>
+            </div>
+
+          </form>
 
         </div>
 
@@ -98,6 +216,39 @@ const {
 
         </div>
 
+      </div>
+
+      <div
+        class="panel"
+        style="margin-top: 24px"
+      >
+        <div class="panel-header">
+          <div>
+            <h3>Tasks</h3>
+            <p>Work on this project</p>
+          </div>
+        </div>
+
+        <div
+          v-if="!projectTasks.length"
+          class="project-owner"
+        >
+          No tasks on this project yet.
+        </div>
+
+        <div
+          v-else
+          class="activity-list"
+        >
+          <div
+            v-for="task in projectTasks"
+            :key="task.id"
+            class="detail-row"
+          >
+            <span>{{ task.title }} · {{ task.assignee }}</span>
+            <strong>{{ task.status }}</strong>
+          </div>
+        </div>
       </div>
 
     </div>

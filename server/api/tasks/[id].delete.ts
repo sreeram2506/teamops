@@ -1,10 +1,9 @@
-import { pool } from '../../database/db';
+import { query, mapTask, logActivity } from '../../database/db'
 
 export default defineEventHandler(async (event) => {
-
   const id = Number(getRouterParam(event, 'id'))
 
-  const result = await pool.query(
+  const result = await query(
     `
     DELETE FROM tasks
     WHERE id = $1
@@ -20,8 +19,12 @@ export default defineEventHandler(async (event) => {
     })
   }
 
+  const task = mapTask(result.rows[0])
+
+  await logActivity(task.assignee || 'TeamOps', 'deleted task', task.title)
+
   return {
     message: 'Task deleted successfully',
-    task: result.rows[0]
+    task
   }
 })

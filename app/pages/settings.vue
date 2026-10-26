@@ -5,16 +5,23 @@ definePageMeta({
   middleware: 'auth'
 })
 
+const authStore = useAuthStore()
+
 const profile = reactive({
-  name: 'John Doe',
-  role: 'Administrator',
-  email: 'john.doe@teamops.io',
+  name: authStore.user?.name ?? '',
+  role: authStore.user?.role ?? '',
+  email: authStore.user?.email ?? '',
   notifications: true
 })
 
 const saved = ref(false)
 
 const saveSettings = () => {
+  authStore.updateProfile({
+    name: profile.name,
+    email: profile.email
+  })
+
   saved.value = true
 }
 

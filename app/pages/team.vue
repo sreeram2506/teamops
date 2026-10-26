@@ -5,32 +5,45 @@ definePageMeta({
   middleware: 'auth'
 })
 
-const members = [
-  {
-    name: 'John Doe',
-    role: 'Administrator',
-    email: 'john.doe@teamops.io',
-    project: 'HR Portal'
-  },
-  {
-    name: 'Sarah Wilson',
-    role: 'Product Designer',
-    email: 'sarah.wilson@teamops.io',
-    project: 'Mobile Application'
-  },
-  {
-    name: 'Mike Smith',
-    role: 'Backend Engineer',
-    email: 'mike.smith@teamops.io',
-    project: 'Analytics Platform'
-  },
-  {
-    name: 'Priya Patel',
-    role: 'Frontend Engineer',
-    email: 'priya.patel@teamops.io',
-    project: 'HR Portal'
+const showForm = ref(false)
+
+const {
+  data: members,
+  pending,
+  error,
+  refresh
+} = await useFetch('/api/members')
+
+const { data: projects } = await useFetch<{ name: string }[]>('/api/projects')
+
+const form = reactive({
+  name: '',
+  role: 'Team Member',
+  email: '',
+  project: ''
+})
+
+const submitting = ref(false)
+
+const addMember = async () => {
+  submitting.value = true
+
+  try {
+    await $fetch('/api/members', {
+      method: 'POST',
+      body: form
+    })
+
+    form.name = ''
+    form.role = 'Team Member'
+    form.email = ''
+    form.project = ''
+    showForm.value = false
+    await refresh()
+  } finally {
+    submitting.value = false
   }
-]
+}
 
 </script>
 
@@ -47,9 +60,82 @@ const members = [
         </p>
       </div>
 
+      <button
+        class="primary-button"
+        @click="showForm = !showForm"
+      >
+        {{ showForm ? 'Cancel' : '+ Add member' }}
+      </button>
+
     </div>
 
-    <div class="projects-grid">
+    <form
+      v-if="showForm"
+      class="panel settings-form"
+      style="margin-bottom: 24px"
+      @submit.prevent="addMember"
+    >
+
+      <div class="form-field">
+        <label>Name</label>
+        <input
+          v-model="form.name"
+          required
+        >
+      </div>
+
+      <div class="form-field">
+        <label>Email</label>
+        <input
+          v-model="form.email"
+          type="email"
+          required
+        >
+      </div>
+
+      <div class="form-field">
+        <label>Role</label>
+        <input v-model="form.role">
+      </div>
+
+      <div class="form-field">
+        <label>Current project</label>
+        <select v-model="form.project">
+          <option value="">
+            Unassigned
+          </option>
+          <option
+            v-for="project in projects"
+            :key="project.name"
+            :value="project.name"
+          >
+            {{ project.name }}
+          </option>
+        </select>
+      </div>
+
+      <button
+        type="submit"
+        class="primary-button"
+        :disabled="submitting"
+      >
+        {{ submitting ? 'Adding...' : 'Add member' }}
+      </button>
+
+    </form>
+
+    <div v-if="pending">
+      Loading team...
+    </div>
+
+    <div v-else-if="error">
+      Failed to load team.
+    </div>
+
+    <div
+      v-else
+      class="projects-grid"
+    >
 
       <div
         v-for="member in members"
@@ -80,7 +166,7 @@ const members = [
 
         <div class="detail-row">
           <span>Current project</span>
-          <strong>{{ member.project }}</strong>
+          <strong>{{ member.project || 'Unassigned' }}</strong>
         </div>
 
       </div>

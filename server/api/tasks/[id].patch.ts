@@ -1,12 +1,10 @@
-import { pool } from '../../database/db';
+import { query, mapTask, logActivity } from '../../database/db'
 
 export default defineEventHandler(async (event) => {
-
   const id = Number(getRouterParam(event, 'id'))
-
   const body = await readBody(event)
 
-  const result = await pool.query(
+  const result = await query(
     `
     UPDATE tasks
     SET
@@ -29,5 +27,11 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  return result.rows[0]
+  const task = mapTask(result.rows[0])
+
+  if (body.status) {
+    await logActivity(task.assignee || 'TeamOps', `moved task to ${body.status}`, task.title)
+  }
+
+  return task
 })

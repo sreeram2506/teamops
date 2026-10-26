@@ -5,44 +5,13 @@ definePageMeta({
   middleware: 'auth'
 })
 
-const activities = [
-  {
-    user: 'John Doe',
-    action: 'created a new project',
-    target: 'HR Portal',
-    time: '10 minutes ago'
-  },
-  {
-    user: 'Sarah Wilson',
-    action: 'completed task',
-    target: 'Dashboard UI',
-    time: '32 minutes ago'
-  },
-  {
-    user: 'Mike Smith',
-    action: 'updated task',
-    target: 'Authentication API',
-    time: '1 hour ago'
-  },
-  {
-    user: 'John Doe',
-    action: 'assigned task to',
-    target: 'Sarah Wilson',
-    time: '2 hours ago'
-  },
-  {
-    user: 'Priya Patel',
-    action: 'commented on',
-    target: 'Mobile Application',
-    time: '3 hours ago'
-  },
-  {
-    user: 'Sarah Wilson',
-    action: 'moved task to In Progress',
-    target: 'Build dashboard UI',
-    time: '5 hours ago'
-  }
-]
+const {
+  data: activities,
+  pending,
+  error
+} = await useFetch('/api/activity')
+
+const { timeAgo } = useTimeAgo()
 
 </script>
 
@@ -61,13 +30,31 @@ const activities = [
 
     </div>
 
-    <div class="panel">
+    <div v-if="pending">
+      Loading activity...
+    </div>
+
+    <div v-else-if="error">
+      Failed to load activity.
+    </div>
+
+    <div
+      v-else-if="!activities?.length"
+      class="panel"
+    >
+      No activity yet. Create a project or task to get started.
+    </div>
+
+    <div
+      v-else
+      class="panel"
+    >
 
       <div class="activity-list">
 
         <div
           v-for="activity in activities"
-          :key="`${activity.user}-${activity.time}`"
+          :key="activity.id"
           class="activity-item"
         >
 
@@ -84,7 +71,7 @@ const activities = [
             </p>
 
             <span>
-              {{ activity.time }}
+              {{ timeAgo(activity.time) }}
             </span>
 
           </div>

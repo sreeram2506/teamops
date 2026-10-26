@@ -33,7 +33,7 @@ const login = async () => {
     <div class="login-card">
 
       <h1>TeamOps</h1>
-      <p>Sign in to your account</p>
+      <p>Sign in with any email and password</p>
 
       <form @submit.prevent="login">
 

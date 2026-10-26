@@ -5,55 +5,71 @@ definePageMeta({
   middleware: 'auth'
 })
 
-const stats = [
-  {
-    title: 'Projects',
-    value: 12,
-    description: '3 active projects'
-  },
-  {
-    title: 'Total Tasks',
-    value: 48,
-    description: '8 tasks due this week'
-  },
-  {
-    title: 'Completed',
-    value: 31,
-    description: '65% completion rate'
-  },
-  {
-    title: 'Team Members',
-    value: 8,
-    description: '2 members recently joined'
-  }
-]
+type Project = {
+  id: number
+  name: string
+  progress: number
+  status: string
+}
 
-const activities = [
-  {
-    user: 'John Doe',
-    action: 'created a new project',
-    target: 'HR Portal',
-    time: '10 minutes ago'
-  },
-  {
-    user: 'Sarah Wilson',
-    action: 'completed task',
-    target: 'Dashboard UI',
-    time: '32 minutes ago'
-  },
-  {
-    user: 'Mike Smith',
-    action: 'updated task',
-    target: 'Authentication API',
-    time: '1 hour ago'
-  },
-  {
-    user: 'John Doe',
-    action: 'assigned task to',
-    target: 'Sarah Wilson',
-    time: '2 hours ago'
-  }
-]
+type Task = {
+  id: number
+  status: string
+}
+
+type Activity = {
+  id: number
+  user: string
+  action: string
+  target: string
+  time: string
+}
+
+type Member = {
+  id: number
+}
+
+const { data: projects } = await useFetch<Project[]>('/api/projects')
+const { data: tasks } = await useFetch<Task[]>('/api/tasks')
+const { data: members } = await useFetch<Member[]>('/api/members')
+const { data: activities } = await useFetch<Activity[]>('/api/activity')
+
+const { timeAgo } = useTimeAgo()
+
+const stats = computed(() => {
+  const projectList = projects.value ?? []
+  const taskList = tasks.value ?? []
+  const memberList = members.value ?? []
+  const activeProjects = projectList.filter(project => project.status === 'Active').length
+  const completedTasks = taskList.filter(task => task.status === 'Done').length
+
+  return [
+    {
+      title: 'Projects',
+      value: projectList.length,
+      description: `${activeProjects} active projects`
+    },
+    {
+      title: 'Total Tasks',
+      value: taskList.length,
+      description: `${taskList.filter(task => task.status !== 'Done').length} still open`
+    },
+    {
+      title: 'Completed',
+      value: completedTasks,
+      description: taskList.length
+        ? `${Math.round((completedTasks / taskList.length) * 100)}% completion rate`
+        : 'No tasks yet'
+    },
+    {
+      title: 'Team Members',
+      value: memberList.length,
+      description: 'People on TeamOps'
+    }
+  ]
+})
+
+const recentActivity = computed(() => (activities.value ?? []).slice(0, 4))
 
 </script>
 
@@ -70,13 +86,14 @@ const activities = [
         </p>
       </div>
 
-      <button class="primary-button">
+      <NuxtLink
+        to="/projects"
+        class="primary-button"
+      >
         + New Project
-      </button>
+      </NuxtLink>
 
     </div>
-
-    <!-- Statistics -->
 
     <section class="stats-grid">
 
@@ -90,8 +107,6 @@ const activities = [
 
     </section>
 
-    <!-- Main content -->
-
     <section class="dashboard-grid">
 
       <div class="panel">
@@ -103,51 +118,33 @@ const activities = [
           </div>
         </div>
 
-        <div class="project-health">
+        <div
+          v-if="!projects?.length"
+          class="project-owner"
+        >
+          No projects yet.
+        </div>
 
-          <div class="health-item">
+        <div
+          v-else
+          class="project-health"
+        >
+
+          <div
+            v-for="project in projects"
+            :key="project.id"
+            class="health-item"
+          >
 
             <div class="health-info">
-              <span>HR Portal</span>
-              <strong>80%</strong>
+              <span>{{ project.name }}</span>
+              <strong>{{ project.progress }}%</strong>
             </div>
 
             <div class="progress">
               <div
                 class="progress-bar"
-                style="width: 80%"
-              />
-            </div>
-
-          </div>
-
-          <div class="health-item">
-
-            <div class="health-info">
-              <span>Mobile Application</span>
-              <strong>60%</strong>
-            </div>
-
-            <div class="progress">
-              <div
-                class="progress-bar"
-                style="width: 60%"
-              />
-            </div>
-
-          </div>
-
-          <div class="health-item">
-
-            <div class="health-info">
-              <span>Analytics Platform</span>
-              <strong>90%</strong>
-            </div>
-
-            <div class="progress">
-              <div
-                class="progress-bar"
-                style="width: 90%"
+                :style="{ width: `${project.progress}%` }"
               />
             </div>
 
@@ -156,8 +153,6 @@ const activities = [
         </div>
 
       </div>
-
-      <!-- Activity -->
 
       <div class="panel">
 
@@ -174,11 +169,21 @@ const activities = [
 
         </div>
 
-        <div class="activity-list">
+        <div
+          v-if="!recentActivity.length"
+          class="project-owner"
+        >
+          No activity yet.
+        </div>
+
+        <div
+          v-else
+          class="activity-list"
+        >
 
           <div
-            v-for="activity in activities"
-            :key="activity.time"
+            v-for="activity in recentActivity"
+            :key="activity.id"
             class="activity-item"
           >
 
@@ -195,7 +200,7 @@ const activities = [
               </p>
 
               <span>
-                {{ activity.time }}
+                {{ timeAgo(activity.time) }}
               </span>
 
             </div>

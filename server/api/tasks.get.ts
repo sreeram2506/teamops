@@ -1,8 +1,7 @@
-import { pool } from '../database/db';
+import { query, mapTask } from '../database/db'
 
 export default defineEventHandler(async () => {
-
-  const result = await pool.query(`
+  const result = await query(`
     SELECT
       id,
       title,
@@ -15,6 +14,5 @@ export default defineEventHandler(async () => {
     ORDER BY id DESC
   `)
 
-  return result.rows
-
+  return result.rows.map(mapTask)
 })

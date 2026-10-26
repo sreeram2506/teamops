@@ -31,6 +31,18 @@ export const useAuthStore = defineStore('auth', () => {
     return true
   }
 
+  const updateProfile = (profile: { name: string, email: string }) => {
+    if (!user.value) {
+      return
+    }
+
+    user.value = {
+      ...user.value,
+      name: profile.name,
+      email: profile.email
+    }
+  }
+
   const logout = async () => {
     user.value = null
     await navigateTo('/login')
@@ -40,6 +52,7 @@ export const useAuthStore = defineStore('auth', () => {
     user,
     isLoggedIn,
     login,
+    updateProfile,
     logout
   }
 })

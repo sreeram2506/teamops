@@ -5,11 +5,19 @@ definePageMeta({
   middleware: 'auth'
 })
 
+const showForm = ref(false)
+
 const {
   data: projects,
   pending,
-  error
+  error,
+  refresh
 } = await useFetch('/api/projects')
+
+const onCreated = async () => {
+  showForm.value = false
+  await refresh()
+}
 
 </script>
 
@@ -26,10 +34,21 @@ const {
         </p>
       </div>
 
-      <button class="primary-button">
-        + New Project
+      <button
+        class="primary-button"
+        @click="showForm = !showForm"
+      >
+        {{ showForm ? 'Cancel' : '+ New Project' }}
       </button>
 
+    </div>
+
+    <div
+      v-if="showForm"
+      class="panel"
+      style="margin-bottom: 24px; max-width: 480px"
+    >
+      <ProjectForm @created="onCreated" />
     </div>
 
     <div v-if="pending">
@@ -40,7 +59,17 @@ const {
       Failed to load projects.
     </div>
 
-    <div v-else class="projects-grid">
+    <div
+      v-else-if="!projects?.length"
+      class="panel"
+    >
+      No projects yet. Create one to get started.
+    </div>
+
+    <div
+      v-else
+      class="projects-grid"
+    >
 
       <div
         v-for="project in projects"

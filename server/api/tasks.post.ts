@@ -1,10 +1,9 @@
-import { pool } from '../database/db';
+import { query, mapTask, logActivity } from '../database/db'
 
 export default defineEventHandler(async (event) => {
-
   const body = await readBody(event)
 
-  const result = await pool.query(
+  const result = await query(
     `
     INSERT INTO tasks
       (title, description, status, priority, assignee, project_id)
@@ -22,5 +21,9 @@ export default defineEventHandler(async (event) => {
     ]
   )
 
-  return result.rows[0]
+  const task = mapTask(result.rows[0])
+
+  await logActivity(task.assignee || 'TeamOps', 'created task', task.title)
+
+  return task
 })

@@ -51,9 +51,11 @@ const onCreated = async () => {
       <ProjectForm @created="onCreated" />
     </div>
 
-    <div v-if="pending">
-      Loading projects...
-    </div>
+    <AppSkeleton
+      v-if="pending"
+      variant="cards"
+      :count="3"
+    />
 
     <div v-else-if="error">
       Failed to load projects.

@@ -124,9 +124,11 @@ const addMember = async () => {
 
     </form>
 
-    <div v-if="pending">
-      Loading team...
-    </div>
+    <AppSkeleton
+      v-if="pending"
+      variant="cards"
+      :count="4"
+    />
 
     <div v-else-if="error">
       Failed to load team.

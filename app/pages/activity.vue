@@ -30,9 +30,11 @@ const { timeAgo } = useTimeAgo()
 
     </div>
 
-    <div v-if="pending">
-      Loading activity...
-    </div>
+    <AppSkeleton
+      v-if="pending"
+      variant="activity"
+      :count="5"
+    />
 
     <div v-else-if="error">
       Failed to load activity.

@@ -29,10 +29,18 @@ type Member = {
   id: number
 }
 
-const { data: projects } = await useFetch<Project[]>('/api/projects')
-const { data: tasks } = await useFetch<Task[]>('/api/tasks')
-const { data: members } = await useFetch<Member[]>('/api/members')
-const { data: activities } = await useFetch<Activity[]>('/api/activity')
+const { data: projects, pending: projectsPending, error: projectsError } = await useFetch<Project[]>('/api/projects')
+const { data: tasks, pending: tasksPending, error: tasksError } = await useFetch<Task[]>('/api/tasks')
+const { data: members, pending: membersPending, error: membersError } = await useFetch<Member[]>('/api/members')
+const { data: activities, pending: activityPending, error: activityError } = await useFetch<Activity[]>('/api/activity')
+
+const loading = computed(() => {
+  return projectsPending.value || tasksPending.value || membersPending.value || activityPending.value
+})
+
+const loadError = computed(() => {
+  return projectsError.value || tasksError.value || membersError.value || activityError.value
+})
 
 const { timeAgo } = useTimeAgo()
 
@@ -95,7 +103,23 @@ const recentActivity = computed(() => (activities.value ?? []).slice(0, 4))
 
     </div>
 
-    <section class="stats-grid">
+    <div
+      v-if="loadError"
+      class="panel"
+    >
+      Failed to load dashboard data.
+    </div>
+
+    <AppSkeleton
+      v-else-if="loading"
+      variant="stats"
+      :count="4"
+    />
+
+    <section
+      v-else
+      class="stats-grid"
+    >
 
       <StatCard
         v-for="stat in stats"
@@ -118,8 +142,14 @@ const recentActivity = computed(() => (activities.value ?? []).slice(0, 4))
           </div>
         </div>
 
+        <AppSkeleton
+          v-if="projectsPending"
+          variant="activity"
+          :count="3"
+        />
+
         <div
-          v-if="!projects?.length"
+          v-else-if="!projects?.length"
           class="project-owner"
         >
           No projects yet.
@@ -169,8 +199,14 @@ const recentActivity = computed(() => (activities.value ?? []).slice(0, 4))
 
         </div>
 
+        <AppSkeleton
+          v-if="activityPending"
+          variant="activity"
+          :count="4"
+        />
+
         <div
-          v-if="!recentActivity.length"
+          v-else-if="!recentActivity.length"
           class="project-owner"
         >
           No activity yet.

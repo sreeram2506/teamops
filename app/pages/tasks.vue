@@ -68,9 +68,11 @@ const projectName = (projectId: number) => {
 
       <div>
 
-        <div v-if="pending">
-          Loading tasks...
-        </div>
+        <AppSkeleton
+          v-if="pending"
+          variant="list"
+          :count="3"
+        />
 
         <div v-else-if="error">
           Failed to load tasks.

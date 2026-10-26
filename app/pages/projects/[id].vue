@@ -86,9 +86,10 @@ const deleteProject = async () => {
 
   <div>
 
-    <div v-if="pending">
-      Loading project...
-    </div>
+    <AppSkeleton
+      v-if="pending"
+      variant="detail"
+    />
 
     <div v-else-if="error">
       Project could not be loaded.

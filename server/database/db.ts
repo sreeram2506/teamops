@@ -3,10 +3,34 @@ import { Pool } from 'pg'
 let pool: Pool | null = null
 let schemaReady: Promise<void> | null = null
 
+function getConnectionString() {
+  const config = useRuntimeConfig()
+  const raw = String(
+    config.databaseUrl
+    || process.env.DATABASE_URL
+    || process.env.NUXT_DATABASE_URL
+    || ''
+  ).trim()
+
+  if (!raw) {
+    return ''
+  }
+
+  try {
+    const url = new URL(raw)
+    url.searchParams.delete('channel_binding')
+    if (!url.searchParams.get('sslmode')) {
+      url.searchParams.set('sslmode', 'require')
+    }
+    return url.toString()
+  } catch {
+    return raw
+  }
+}
+
 export function getPool() {
   if (!pool) {
-    const config = useRuntimeConfig()
-    const connectionString = config.databaseUrl
+    const connectionString = getConnectionString()
 
     if (!connectionString) {
       throw createError({
@@ -16,10 +40,13 @@ export function getPool() {
     }
 
     pool = new Pool({
-      connectionString: String(connectionString),
+      connectionString,
       ssl: {
         rejectUnauthorized: false
-      }
+      },
+      max: 1,
+      idleTimeoutMillis: 10000,
+      connectionTimeoutMillis: 10000
     })
   }
 
@@ -27,8 +54,16 @@ export function getPool() {
 }
 
 export async function query(text: string, params?: any[]) {
-  await ensureSchema()
-  return getPool().query(text, params)
+  try {
+    await ensureSchema()
+    return await getPool().query(text, params)
+  } catch (error) {
+    console.error('Database query failed')
+    throw createError({
+      statusCode: 500,
+      statusMessage: error instanceof Error ? error.message : 'Database query failed'
+    })
+  }
 }
 
 async function ensureSchema() {
@@ -68,7 +103,10 @@ async function ensureSchema() {
             ('Priya Patel', 'Frontend Engineer', 'priya.patel@teamops.io', 'HR Portal')
         `)
       }
-    })()
+    })().catch((error) => {
+      schemaReady = null
+      throw error
+    })
   }
 
   await schemaReady

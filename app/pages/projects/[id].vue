@@ -21,10 +21,10 @@ const {
   pending,
   error,
   refresh
-} = await useFetch(`/api/projects/${projectId}`)
+} = useLazyApi(() => `/api/projects/${projectId}`)
 
-const { data: tasks } = await useFetch<Task[]>('/api/tasks')
-const { data: members } = await useFetch<{ name: string }[]>('/api/members')
+const { data: tasks } = useLazyApi<Task[]>('/api/tasks')
+const { data: members } = useLazyApi<{ name: string }[]>('/api/members')
 
 const projectTasks = computed(() => {
   return (tasks.value ?? []).filter(task => String(task.projectId) === String(projectId))

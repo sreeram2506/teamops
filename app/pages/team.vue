@@ -12,9 +12,9 @@ const {
   pending,
   error,
   refresh
-} = await useFetch('/api/members')
+} = useLazyApi('/api/members')
 
-const { data: projects } = await useFetch<{ name: string }[]>('/api/projects')
+const { data: projects } = useLazyApi<{ name: string }[]>('/api/projects')
 
 const form = reactive({
   name: '',

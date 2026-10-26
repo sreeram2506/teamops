@@ -29,10 +29,10 @@ type Member = {
   id: number
 }
 
-const { data: projects, pending: projectsPending, error: projectsError } = await useFetch<Project[]>('/api/projects')
-const { data: tasks, pending: tasksPending, error: tasksError } = await useFetch<Task[]>('/api/tasks')
-const { data: members, pending: membersPending, error: membersError } = await useFetch<Member[]>('/api/members')
-const { data: activities, pending: activityPending, error: activityError } = await useFetch<Activity[]>('/api/activity')
+const { data: projects, pending: projectsPending, error: projectsError } = useLazyApi<Project[]>('/api/projects')
+const { data: tasks, pending: tasksPending, error: tasksError } = useLazyApi<Task[]>('/api/tasks')
+const { data: members, pending: membersPending, error: membersError } = useLazyApi<Member[]>('/api/members')
+const { data: activities, pending: activityPending, error: activityError } = useLazyApi<Activity[]>('/api/activity')
 
 const loading = computed(() => {
   return projectsPending.value || tasksPending.value || membersPending.value || activityPending.value

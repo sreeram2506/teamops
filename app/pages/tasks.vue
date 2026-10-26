@@ -29,7 +29,7 @@ const {
   deleteTask
 } = useTasks()
 
-const { data: projects } = await useFetch<Project[]>('/api/projects')
+const { data: projects } = useLazyApi<Project[]>('/api/projects')
 
 const projectName = (projectId: number) => {
   return projects.value?.find(project => project.id === projectId)?.name ?? 'Unknown project'

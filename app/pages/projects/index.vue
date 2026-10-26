@@ -12,7 +12,7 @@ const {
   pending,
   error,
   refresh
-} = await useFetch('/api/projects')
+} = useLazyApi('/api/projects')
 
 const onCreated = async () => {
   showForm.value = false

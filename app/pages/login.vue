@@ -8,6 +8,7 @@ definePageMeta({
 const email = ref('')
 const password = ref('')
 const errorMessage = ref('')
+const submitting = ref(false)
 
 const authStore = useAuthStore()
 
@@ -21,6 +22,7 @@ const login = async () => {
     return
   }
 
+  submitting.value = true
   await navigateTo('/dashboard')
 }
 
@@ -30,7 +32,22 @@ const login = async () => {
 
   <div class="login-page">
 
-    <div class="login-card">
+    <div
+      v-if="submitting"
+      class="login-card"
+    >
+      <h1>TeamOps</h1>
+      <p>Signing you in...</p>
+      <AppSkeleton
+        variant="list"
+        :count="3"
+      />
+    </div>
+
+    <div
+      v-else
+      class="login-card"
+    >
 
       <h1>TeamOps</h1>
       <p>Sign in with any email and password</p>

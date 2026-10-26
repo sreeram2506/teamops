@@ -9,7 +9,7 @@ const {
   data: activities,
   pending,
   error
-} = await useFetch('/api/activity')
+} = useLazyApi('/api/activity')
 
 const { timeAgo } = useTimeAgo()
 
